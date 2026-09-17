@@ -11,7 +11,7 @@ p:close()
 
 local _cpu_rings = {}
 
-for i = 1, cpus do
+for i = 1, 8 do 				-- change value to cpu to get all cpus.... should be the TOP 8 cpus!
     _cpu_rings[#_cpu_rings + 1] = {
         command = 'cpu cpu' .. i,
         max = 100
