@@ -1,0 +1,84 @@
+# Follow the two editable Draft paths embedded in
+# Nejsigvang_8_original_med_redigerbare_kamerabaner.FCStd
+#
+# CameraPath360 = camera position path
+# FocusPath     = synchronized look-at path
+#
+# Both paths can be edited in Draft Workbench. This macro reads their current
+# Points properties every time it starts, so your later edits are automatically used.
+
+import math
+import time
+import FreeCAD
+import FreeCADGui as Gui
+from pivy import coin
+
+FPS = 30
+DURATION = 36.0
+FOV_DEG = 58.0
+UP = coin.SbVec3f(0.0, 0.0, 1.0)
+
+if FreeCAD.ActiveDocument is None:
+    raise RuntimeError("Open the Nejsigvang model first.")
+
+doc = FreeCAD.ActiveDocument
+cam_path = doc.getObject("CameraPath360")
+focus_path = doc.getObject("FocusPath")
+if cam_path is None or focus_path is None:
+    raise RuntimeError("CameraPath360 and/or FocusPath were not found in the document.")
+
+
+def world_points(obj):
+    pts = []
+    for p in obj.Points:
+        pts.append(obj.Placement.multVec(FreeCAD.Vector(p.x, p.y, p.z)))
+    if len(pts) < 3:
+        raise RuntimeError(obj.Name + " needs at least 3 points.")
+    return pts
+
+
+def sample_closed(points, u):
+    # Closed Catmull-Rom interpolation. The camera therefore follows a smooth curve
+    # even though the Draft Wire itself is made from editable straight segments.
+    n = len(points)
+    u = u % 1.0
+    x = u * n
+    i = int(math.floor(x)) % n
+    t = x - math.floor(x)
+    pm = points[(i - 1) % n]
+    p0 = points[i]
+    p1 = points[(i + 1) % n]
+    pp = points[(i + 2) % n]
+    m0 = (p1 - pm) * 0.5
+    m1 = (pp - p0) * 0.5
+    t2 = t*t
+    t3 = t2*t
+    h00 = 2*t3 - 3*t2 + 1
+    h10 = t3 - 2*t2 + t
+    h01 = -2*t3 + 3*t2
+    h11 = t3 - t2
+    return p0*h00 + m0*h10 + p1*h01 + m1*h11
+
+cam_pts = world_points(cam_path)
+focus_pts = world_points(focus_path)
+
+Gui.runCommand("Std_PerspectiveCamera", 1)
+view = Gui.ActiveDocument.ActiveView
+camera = view.getCameraNode()
+try:
+    camera.heightAngle.setValue(math.radians(FOV_DEG))
+except Exception:
+    pass
+
+frames = max(2, int(FPS * DURATION))
+dt = 1.0 / FPS
+for frame in range(frames + 1):
+    u = frame / float(frames)
+    pos = sample_closed(cam_pts, u)
+    target = sample_closed(focus_pts, u)
+    camera.position.setValue(float(pos.x), float(pos.y), float(pos.z))
+    camera.pointAt(coin.SbVec3f(float(target.x), float(target.y), float(target.z)), UP)
+    Gui.updateGui()
+    time.sleep(dt)
+
+FreeCAD.Console.PrintMessage("Editable CameraPath360 / FocusPath loop finished.\n")
