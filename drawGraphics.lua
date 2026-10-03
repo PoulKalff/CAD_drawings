@@ -168,13 +168,13 @@ function draw_disk(x, y)
     )
 
     cairo_set_font_size(cairo, 40)
-    cairo_move_to(cairo, x - 50, y - 65)
+    cairo_move_to(cairo, x - 50, y - 50)
     cairo_show_text(cairo, "DISK")
 
     -- Write disk labels and sizes
     cairo_set_font_size(cairo, 16)
 
-    local yOffset = -37
+    local yOffset = -32
     local lineSpacing = 15
 
     for index, text in ipairs(displayTexts) do
@@ -233,14 +233,14 @@ function draw_ram(x, y)
   -- Write text at center of rings
   cairo_select_font_face (cairo, "Serif", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
   cairo_set_source_rgba(cairo, rgba(0xffffff, variables.bg_alpha))
-  cairo_set_font_size(cairo, 30)
-  cairo_move_to(cairo, x - 40, y - 65)
+  cairo_set_font_size(cairo, 40)
+  cairo_move_to(cairo, x - 50, y - 50)
   cairo_show_text(cairo, "MEM")
   cairo_set_font_size(cairo, 14)
-  cairo_move_to(cairo, x - 140, y - 38)
+  cairo_move_to(cairo, x - 140, y - 34)
   cairo_show_text(cairo, "RAM " .. displayTexts[1])
   cairo_set_source_rgba(cairo, rgba(0xc6c6c6, variables.bg_alpha))
-  cairo_move_to(cairo, x - 140, y - 23)
+  cairo_move_to(cairo, x - 140, y - 19)
   cairo_show_text(cairo, "SWAP " .. displayTexts[2])
   cairo_stroke(cairo)
 end
